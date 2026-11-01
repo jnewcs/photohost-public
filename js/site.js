@@ -84,7 +84,53 @@
 
   // Cloudflare Turnstile (explicit render so the key stays in config.js)
   const turnstileContainer = $("#turnstile-widget");
+  const form = $("#contact-form");
+  const status = $("#form-status");
+  const submitButton = $("#contact-submit");
+  const submitLabel = submitButton ? $(".button-label", submitButton) : null;
+  const submitSpinner = submitButton ? $(".button-spinner", submitButton) : null;
   let turnstileWidgetId = null;
+  let verifyState = "loading";
+  let sending = false;
+  let startedAt = performance.now();
+
+  const showStatus = (message, state) => {
+    status.textContent = message;
+    status.dataset.state = state;
+  };
+
+  const showVerificationError = () => {
+    status.innerHTML =
+      'Verification could not load. Please refresh the page, or email ' +
+      '<a href="mailto:saumyasinghalphotography@gmail.com">saumyasinghalphotography@gmail.com</a>.';
+    status.dataset.state = "error";
+  };
+
+  const updateSubmit = () => {
+    if (!submitButton) return;
+    submitButton.disabled = sending || verifyState !== "ready";
+    if (submitSpinner) submitSpinner.hidden = !(sending || verifyState === "loading");
+    if (!submitLabel) return;
+    if (sending) submitLabel.textContent = "Sending…";
+    else if (verifyState === "ready") submitLabel.textContent = "Send inquiry";
+    else if (verifyState === "interactive") submitLabel.textContent = "Complete verification";
+    else if (verifyState === "error") submitLabel.textContent = "Verification unavailable";
+    else submitLabel.textContent = "Verifying…";
+  };
+  updateSubmit();
+
+  const resetTurnstile = () => {
+    if (turnstileWidgetId !== null && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetId);
+    }
+  };
+
+  const verificationTimeout = window.setTimeout(() => {
+    if (verifyState === "ready") return;
+    verifyState = "error";
+    updateSubmit();
+    showVerificationError();
+  }, 12000);
 
   const mountTurnstile = () => {
     if (!turnstileContainer || turnstileWidgetId !== null) return;
@@ -95,32 +141,38 @@
     turnstileWidgetId = window.turnstile.render(turnstileContainer, {
       sitekey: config.turnstileSiteKey,
       theme: "light",
+      callback: () => {
+        window.clearTimeout(verificationTimeout);
+        verifyState = "ready";
+        updateSubmit();
+      },
+      "expired-callback": () => {
+        verifyState = "loading";
+        updateSubmit();
+      },
+      "error-callback": (code) => {
+        window.console.warn("Turnstile error", code);
+        verifyState = "error";
+        updateSubmit();
+        showVerificationError();
+      },
+      "before-interactive-callback": () => {
+        verifyState = "interactive";
+        updateSubmit();
+      },
+      "after-interactive-callback": () => {
+        verifyState = "loading";
+        updateSubmit();
+      },
     });
   };
   mountTurnstile();
 
-  // Contact form
-  const form = $("#contact-form");
   if (!form) return;
-
-  const status = $("#form-status");
-  const submit = $("#contact-submit");
-  let startedAt = performance.now();
-  let sending = false;
-  const showStatus = (message, state) => {
-    status.textContent = message;
-    status.dataset.state = state;
-  };
-
-  const resetTurnstile = () => {
-    if (turnstileWidgetId !== null && window.turnstile) {
-      window.turnstile.reset(turnstileWidgetId);
-    }
-  };
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (sending) return;
+    if (sending || verifyState !== "ready") return;
 
     status.textContent = "";
     delete status.dataset.state;
@@ -134,7 +186,9 @@
       ? window.turnstile.getResponse(turnstileWidgetId)
       : "";
     if (!token) {
-      showStatus("Please complete the verification below before sending.", "error");
+      verifyState = "loading";
+      updateSubmit();
+      showStatus("Verification is still checking. Please wait a moment and try again.", "error");
       return;
     }
 
@@ -143,8 +197,7 @@
     data.set("elapsed_ms", String(Math.round(performance.now() - startedAt)));
 
     sending = true;
-    submit.disabled = true;
-    submit.textContent = "Sending…";
+    updateSubmit();
 
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 15000);
@@ -178,9 +231,9 @@
     } finally {
       window.clearTimeout(timeout);
       sending = false;
-      submit.disabled = false;
-      submit.textContent = "Send inquiry";
+      verifyState = "loading";
       resetTurnstile();
+      updateSubmit();
     }
   });
 })();

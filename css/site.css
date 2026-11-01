@@ -126,7 +126,9 @@ a:hover {
 }
 
 .button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   padding: 14px 28px;
   border: 1px solid var(--ink);
   background: var(--ink);
@@ -136,6 +138,25 @@ a:hover {
   text-decoration: none;
   text-transform: uppercase;
   transition: background 150ms ease, color 150ms ease;
+}
+
+.button-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spin 800ms linear infinite;
+}
+
+.button-spinner[hidden] {
+  display: none;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .button:hover {

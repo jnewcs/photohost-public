@@ -180,7 +180,10 @@
           <div class="turnstile-wrap" id="turnstile-widget"></div>
 
           <div class="form-footer">
-            <button class="button" id="contact-submit" type="submit">Send inquiry</button>
+            <button class="button" disabled id="contact-submit" type="submit">
+              <span aria-hidden="true" class="button-spinner"></span>
+              <span class="button-label">Verifying…</span>
+            </button>
             <p class="form-note">
               By sending this form you agree to our <a href="privacy-policy/">Privacy Policy</a>.
               This site is protected by Cloudflare Turnstile.
