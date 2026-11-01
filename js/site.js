@@ -126,7 +126,9 @@
   };
 
   const verificationTimeout = window.setTimeout(() => {
-    if (verifyState === "ready") return;
+    // Only fail when Turnstile never rendered; an interactive challenge can
+    // legitimately wait for the visitor.
+    if (verifyState === "ready" || turnstileWidgetId !== null) return;
     verifyState = "error";
     updateSubmit();
     showVerificationError();
