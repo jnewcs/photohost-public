@@ -144,6 +144,7 @@
         </div>
 
         <form class="contact-form" id="contact-form" novalidate>
+          <div class="form-fields" id="contact-fields">
           <p aria-live="polite" class="form-status" id="form-status" role="status"></p>
 
           <div class="field-row">
@@ -188,6 +189,14 @@
               By sending this form you agree to our <a href="privacy-policy/">Privacy Policy</a>.
               This site is protected by Cloudflare Turnstile.
             </p>
+          </div>
+          </div>
+
+          <div class="form-success" hidden id="form-success">
+            <p class="eyebrow">Message sent</p>
+            <h3 tabindex="-1">Thank you!</h3>
+            <p>Your inquiry is on its way. I'll be in touch soon at the email address you provided.</p>
+            <button class="button" id="contact-another" type="button">Send another inquiry</button>
           </div>
         </form>
       </div>

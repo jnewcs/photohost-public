@@ -86,6 +86,9 @@
   const turnstileContainer = $("#turnstile-widget");
   const form = $("#contact-form");
   const status = $("#form-status");
+  const fields = $("#contact-fields");
+  const successPanel = $("#form-success");
+  const anotherButton = $("#contact-another");
   const submitButton = $("#contact-submit");
   const submitLabel = submitButton ? $(".button-label", submitButton) : null;
   const submitSpinner = submitButton ? $(".button-spinner", submitButton) : null;
@@ -172,6 +175,21 @@
 
   if (!form) return;
 
+  if (anotherButton) {
+    anotherButton.addEventListener("click", () => {
+      if (successPanel) successPanel.hidden = true;
+      if (fields) fields.hidden = false;
+      form.reset();
+      status.textContent = "";
+      delete status.dataset.state;
+      startedAt = performance.now();
+      verifyState = "loading";
+      resetTurnstile();
+      updateSubmit();
+      $("#name")?.focus();
+    });
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (sending || verifyState !== "ready") return;
@@ -222,9 +240,15 @@
         throw new Error(payload.error || "Something went wrong. Please try again.");
       }
 
-      showStatus("Thank you! Your inquiry is on its way. I'll be in touch soon.", "success");
       form.reset();
       startedAt = performance.now();
+      status.textContent = "";
+      delete status.dataset.state;
+      if (fields) fields.hidden = true;
+      if (successPanel) {
+        successPanel.hidden = false;
+        successPanel.querySelector("h3")?.focus();
+      }
     } catch (error) {
       const message = error.name === "AbortError"
         ? "The message took too long to send. Please try again."
