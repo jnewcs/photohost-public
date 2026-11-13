@@ -105,7 +105,7 @@
   const showVerificationError = () => {
     status.innerHTML =
       'Verification could not load. Please refresh the page, or email ' +
-      '<a href="mailto:saumyasinghalphotography@gmail.com">saumyasinghalphotography@gmail.com</a>.';
+      '<a href="mailto:contact@saumyasinghal.photography">contact@saumyasinghal.photography</a>.';
     status.dataset.state = "error";
   };
 
